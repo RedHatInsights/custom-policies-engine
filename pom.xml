@@ -24,6 +24,14 @@
     </license>
   </licenses>
 
+  <scm>
+    <connection>scm:git:https://github.com/RedHatInsights/custom-policies-engine.git</connection>
+    <url>scm:git:https://github.com/RedHatInsights/custom-policies-engine.git</url>
+    <developerConnection>scm:git:https://github.com/RedHatInsights/custom-policies-engine.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+
+
   <properties>
     <!-- Maven related -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -34,6 +42,10 @@
     <version.org.apache.maven.plugins.maven-jar-plugin>3.0.2</version.org.apache.maven.plugins.maven-jar-plugin>
     <version.org.apache.maven.plugins.maven-resources-plugin>3.0.2</version.org.apache.maven.plugins.maven-resources-plugin>
     <version.org.apache.maven.plugins.maven-compiler-plugin>3.8.1</version.org.apache.maven.plugins.maven-compiler-plugin>
+    <version.org.apache.maven.plugins.maven-source-plugin>3.2.1</version.org.apache.maven.plugins.maven-source-plugin>
+    <version.org.apache.maven.plugins.maven-release-plugin>3.0.0-M1</version.org.apache.maven.plugins.maven-release-plugin>
+    <version.org.apache.maven.plugins.maven-javadoc-plugin>3.1.1</version.org.apache.maven.plugins.maven-javadoc-plugin>
+
 
     <!-- Rest of them -->
     <version.junit>4.13</version.junit> <!-- External module uses Quarkus' JUnit 5 -->
@@ -53,6 +65,9 @@
 
     <!-- Quarkus -->
     <quarkus.version>1.5.1.Final</quarkus.version>
+    <version.maven-source-plugin>3.2.1</version.maven-source-plugin>
+    <version.maven-release-plugin>3.0.0-M1</version.maven-release-plugin>
+    <version.maven-javadoc-plugin>3.1.1</version.maven-javadoc-plugin>
   </properties>
 
   <dependencyManagement>
@@ -141,6 +156,51 @@
         <module>external</module>
       </modules>
     </profile>
+
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>${version.org.apache.maven.plugins.maven-javadoc-plugin}</version>
+            <configuration>
+              <failOnError>false</failOnError>
+            </configuration>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>${version.org.apache.maven.plugins.maven-source-plugin}</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-release-plugin</artifactId>
+            <version>${version.org.apache.maven.plugins.maven-release-plugin}</version>
+            <configuration>
+              <tagNameFormat>v@{project.version}</tagNameFormat>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
   <build>
@@ -171,4 +231,12 @@
       </plugin>
     </plugins>
   </build>
+
+  <distributionManagement>
+    <repository>
+      <id>jboss.staging</id>
+      <url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2</url>
+    </repository>
+  </distributionManagement>
+
 </project>

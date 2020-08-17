@@ -2,16 +2,69 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+<!--
   <parent>
     <groupId>com.redhat.cloud.policies</groupId>
     <artifactId>policies-engine</artifactId>
     <version>2.1.0-SNAPSHOT</version>
   </parent>
+-->
 
+  <groupId>com.redhat.cloud.policies</groupId>
   <artifactId>policies-engine-api</artifactId>
+  <version>2.1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>Policies Engine: API</name>
+  <description>API of the processing engine for Policies service</description>
+  <inceptionYear>2019</inceptionYear>
+  <organization>
+    <name>Red Hat, Inc.</name>
+    <url>http://redhat.com/</url>
+  </organization>
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <distribution>repo</distribution>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+    </license>
+  </licenses>
+
+  <scm>
+    <connection>scm:git:https://github.com/RedHatInsights/custom-policies-engine.git</connection>
+    <url>scm:git:https://github.com/RedHatInsights/custom-policies-engine.git</url>
+    <developerConnection>scm:git:https://github.com/RedHatInsights/custom-policies-engine.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+    <version.org.apache.maven.plugins.maven-compiler-plugin>3.8.1</version.org.apache.maven.plugins.maven-compiler-plugin>
+    <version.org.apache.maven.plugins.maven-source-plugin>3.2.1</version.org.apache.maven.plugins.maven-source-plugin>
+    <version.org.apache.maven.plugins.maven-release-plugin>3.0.0-M1</version.org.apache.maven.plugins.maven-release-plugin>
+    <version.org.apache.maven.plugins.maven-javadoc-plugin>3.1.1</version.org.apache.maven.plugins.maven-javadoc-plugin>
+
+    <version.org.antlr>4.7.2</version.org.antlr>
+    <version.org.jboss.logging.jboss-logging-tools>2.2.1.Final</version.org.jboss.logging.jboss-logging-tools>
+    <quarkus.version>1.5.1.Final</quarkus.version>
+
+
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-bom</artifactId>
+        <version>${quarkus.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+
+  </dependencyManagement>
 
   <dependencies>
     <dependency>
@@ -70,7 +123,71 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${version.org.apache.maven.plugins.maven-compiler-plugin}</version>
+        <configuration>
+          <release>11</release>
+          <forceJavacCompilerUse>true</forceJavacCompilerUse>
+        </configuration>
+      </plugin>
+
+
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>${version.org.apache.maven.plugins.maven-javadoc-plugin}</version>
+            <configuration>
+              <failOnError>false</failOnError>
+            </configuration>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>${version.org.apache.maven.plugins.maven-source-plugin}</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-release-plugin</artifactId>
+            <version>${version.org.apache.maven.plugins.maven-release-plugin}</version>
+            <configuration>
+              <tagNameFormat>v@{project.version}</tagNameFormat>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
+  <distributionManagement>
+    <repository>
+      <id>jboss.staging</id>
+      <url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2</url>
+    </repository>
+  </distributionManagement>
 
 </project>
