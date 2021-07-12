@@ -8,8 +8,6 @@ import java.util.regex.Pattern;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.hawkular.alerts.AlertsStandalone;
 import org.hawkular.alerts.api.services.ActionsService;
-import org.hawkular.alerts.api.services.AlertsService;
-import org.hawkular.alerts.api.services.DefinitionsService;
 import org.hawkular.alerts.api.services.StatusService;
 import org.hawkular.alerts.engine.impl.StatusServiceImpl;
 import org.hawkular.alerts.log.MsgLogger;
@@ -42,16 +40,6 @@ public class AlertStarter {
 
     @Inject
     StatusService statusService;
-
-    @Produces
-    public AlertsService getAlertService() {
-        return alerts.getAlertsService();
-    }
-
-    @Produces
-    public DefinitionsService getDefinitionsService() {
-        return alerts.getDefinitionsService();
-    }
 
     @Produces
     public ActionsService getActionsService() {

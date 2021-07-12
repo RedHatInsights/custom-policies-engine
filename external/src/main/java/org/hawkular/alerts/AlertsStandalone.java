@@ -1,6 +1,5 @@
 package org.hawkular.alerts;
 
-import com.redhat.cloud.policies.engine.actions.QuarkusActionPluginRegister;
 import io.quarkus.runtime.LaunchMode;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.hawkular.alerts.api.services.ActionsService;
@@ -22,6 +21,8 @@ import org.hawkular.alerts.engine.impl.ispn.IspnActionsServiceImpl;
 import org.hawkular.alerts.engine.impl.ispn.IspnAdminService;
 import org.hawkular.alerts.engine.impl.ispn.IspnAlertsServiceImpl;
 import org.hawkular.alerts.engine.impl.ispn.IspnDefinitionsServiceImpl;
+import org.hawkular.alerts.engine.service.AlertsEngine;
+import org.hawkular.alerts.engine.service.IncomingDataManager;
 import org.hawkular.alerts.filter.CacheClient;
 import org.hawkular.alerts.log.MsgLogger;
 import org.hawkular.alerts.log.MsgLogging;
@@ -30,10 +31,10 @@ import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.impl.massindex.DistributedExecutorMassIndexer;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -50,7 +51,7 @@ public class AlertsStandalone {
     private static ExecutorService executor;
 
     @Inject
-    QuarkusActionPluginRegister pluginRegister;
+    AlertsService alertsService;
 
     //    @ConfigProperty(name = "engine.backend.ispn.reindex", defaultValue = "false")
     private boolean ispnReindex;
@@ -65,14 +66,14 @@ public class AlertsStandalone {
     private ExtensionsServiceImpl extensions;
     private IncomingDataManagerImpl incoming;
     private IspnActionsServiceImpl ispnActions;
-    private IspnAlertsServiceImpl ispnAlerts;
     private IspnDefinitionsServiceImpl ispnDefinitions;
     private StatusServiceImpl status;
     private PartitionManagerImpl partitionManager;
     private PublishCacheManager publishCacheManager;
     private IspnAdminService adminService;
 
-    public AlertsStandalone() {
+    @PostConstruct
+    void postConstruct() {
         log.info("Policies Engine uses Infinispan backend");
 
         if((LaunchMode.current() == LaunchMode.DEVELOPMENT || LaunchMode.current() == LaunchMode.TEST) && isEmpty(System.getProperty("hawkular.data"))) {
@@ -101,17 +102,19 @@ public class AlertsStandalone {
         ispnReindex = ConfigProvider.getConfig().getValue("engine.backend.ispn.reindex", Boolean.class);
 
         ispnActions = new IspnActionsServiceImpl();
-        ispnAlerts = new IspnAlertsServiceImpl();
         ispnDefinitions = new IspnDefinitionsServiceImpl();
 
         ispnActions.setActionsCacheManager(actionsCacheManager);
         ispnActions.setAlertsContext(alertsContext);
         ispnActions.setDefinitions(ispnDefinitions);
 
-        ispnAlerts.setActionsService(ispnActions);
-        ispnAlerts.setAlertsEngine(engine);
-        ispnAlerts.setDefinitionsService(ispnDefinitions);
-        ispnAlerts.setIncomingDataManager(incoming);
+        if (alertsService instanceof IspnAlertsServiceImpl) {
+            IspnAlertsServiceImpl ispnAlerts = (IspnAlertsServiceImpl) alertsService;
+            ispnAlerts.setActionsService(ispnActions);
+            ispnAlerts.setAlertsEngine(engine);
+            ispnAlerts.setDefinitionsService(ispnDefinitions);
+            ispnAlerts.setIncomingDataManager(incoming);
+        }
 
         ispnDefinitions.setAlertsEngine(engine);
         ispnDefinitions.setAlertsContext(alertsContext);
@@ -127,7 +130,7 @@ public class AlertsStandalone {
         dataIdCache.setCache(cacheManager.getCache("publish"));
 
         engine.setActions(ispnActions);
-        engine.setAlertsService(ispnAlerts);
+        engine.setAlertsService(alertsService);
         engine.setDefinitions(ispnDefinitions);
         engine.setExecutor(executor);
         engine.setExtensionsService(extensions);
@@ -169,7 +172,7 @@ public class AlertsStandalone {
             status.setReindexing(false);
         }
         // Initialization needs order and needs to be done after reindexing
-        ispnAlerts.init();
+        alertsService.init();
         ispnDefinitions.init();
         ispnActions.init();
         adminService.init();
@@ -189,12 +192,9 @@ public class AlertsStandalone {
             IspnCacheManager.stop();
     }
 
+    @Produces
     public DefinitionsService getDefinitionsService() {
         return ispnDefinitions;
-    }
-
-    public AlertsService getAlertsService() {
-        return ispnAlerts;
     }
 
     public ActionsService getActionsService() {
@@ -209,6 +209,16 @@ public class AlertsStandalone {
     @Produces
     public IspnAdminService getAdminService() {
         return adminService;
+    }
+
+    @Produces
+    public AlertsEngine getAlertsEngine() {
+        return engine;
+    }
+
+    @Produces
+    public IncomingDataManager getIncomingDataManager() {
+        return incoming;
     }
 
     public boolean isReindexing() {

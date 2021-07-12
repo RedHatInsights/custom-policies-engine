@@ -239,4 +239,11 @@ public interface AlertsService {
      * @throws Exception
      */
     Uni<Void> sendEvents(Collection<Event> events, boolean ignoreFiltering) throws Exception;
+
+    /**
+     * Initialize the service.
+     * This is a temporary method required to transition from no-CDI to CDI.
+     */
+    default void init() {
+    }
 }
